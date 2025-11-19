@@ -7,7 +7,7 @@ node {
 
         echo "Jenkins Home: ${env.JENKINS_HOME}"
         echo "Jenkins URL: ${env.JENKINS_URL}"
-        echo "Jon Name: ${env.JOB_NAME}"
+        echo "Job Name: ${env.JOB_NAME}"
 
     stage('Git Clone') {
         git credentialsId: 'Github-cred', url: 'https://github.com/IziTechi/maven-web-application/ '
