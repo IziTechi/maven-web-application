@@ -1,0 +1,36 @@
+node {
+    def mavenHome = tool 'maven 3.9.11' // This will set the MAVEN_HOME environment variable
+
+        echo "GitHub Branchname: ${env.BRANCH_NAME}"
+        echo "Jenkins Job Number: ${env.BUILD_NUMBER}"
+        echo "Jenkins Node Name: ${env.NODE_NAME}"
+
+        echo "Jenkins Home: ${env.JENKINS_HOME}"
+        echo "Jenkins URL: ${env.JENKINS_URL}"
+        echo "Jon Name: ${env.JOB_NAME}"
+
+    stage('Git Clone') {
+        git credentialsId: 'Github-cred', url: 'https://github.com/IziTechi/maven-web-application/ '
+    }
+    stage('Maven Build') {
+        sh "${mavenHome}/bin/mvn clean package"
+    }
+    stage('Code Quality Checks') {
+        sh "${mavenHome}/bin/mvn sonar:sonar"
+    }
+    stage('Deploy Packages to UAT ENV') {
+        deploy adapters: [tomcat9(alternativeDeploymentContext: '', credentialsId: 'tomcat-cred', path: '', url: 'http://10.0.2.15:0964/manager/')], contextPath: null, war: 'target/*.war'
+    }
+    stage('Approval - Verify to deploy PROD') {
+       timeout(time:8, unit: 'HOURS' ) {
+       input message: 'Please verify and approve'}
+    }
+    stage('Deploy Packages to PROD ENV') {
+       deploy adapters: [tomcat9(alternativeDeploymentContext: '', credentialsId: 'tomcat-cred', path: '', url: 'http://10.0.2.15:0964/manager/')], contextPath: null, war: 'target/*.war'
+    }
+    stage('Email Notification') {
+       emailext body: '''This is to notify you the pipeline succeeded 
+Thanks 
+DevOps Team''', recipientProviders: [developers()], subject: 'Pipeline Job Status ', to: 'stakeholders'
+    }
+}
